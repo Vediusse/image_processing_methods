@@ -12,3 +12,6 @@ labs/lab_01/exports/
 labs/lab_02/src/*.egg-info/
 labs/lab_02/src/**/*.egg-info/
 labs/lab_02/exports/
+labs/lab_03/src/*.egg-info/
+labs/lab_03/src/**/*.egg-info/
+labs/lab_03/exports/
