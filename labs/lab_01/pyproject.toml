@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "image-processing-lab1"
+version = "1.0.0"
+description = "Foundation project for image processing lab 1: triangle illumination and brightness evaluation"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+  "numpy>=1.24",
+  "PySide6>=6.5",
+  "matplotlib>=3.7",
+  "rich>=13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+
+[project.scripts]
+image-lab1-cli = "image_lab1.cli:main"
+image-lab1-gui = "image_lab1.app:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

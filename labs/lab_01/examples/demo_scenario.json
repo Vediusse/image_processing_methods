@@ -1,0 +1,44 @@
+{
+  "triangle": {
+    "a": { "x": 0.0, "y": 0.0, "z": 0.0 },
+    "b": { "x": 2.0, "y": 0.0, "z": 0.0 },
+    "c": { "x": 0.5, "y": 1.8, "z": 0.7 }
+  },
+  "lights": [
+    {
+      "name": "KeyLight",
+      "position": { "x": 1.2, "y": 1.4, "z": 3.2 },
+      "axis_direction": { "x": -0.15, "y": -0.2, "z": -1.0 },
+      "intensity": { "r": 1.0, "g": 0.92, "b": 0.85 },
+      "profile": { "exponent": 6.0, "cutoff_degrees": 70.0 }
+    },
+    {
+      "name": "FillLight",
+      "position": { "x": -1.0, "y": 2.0, "z": 2.5 },
+      "axis_direction": { "x": 0.5, "y": -0.4, "z": -1.0 },
+      "intensity": { "r": 0.45, "g": 0.6, "b": 1.0 },
+      "profile": { "exponent": 3.0, "cutoff_degrees": 80.0 }
+    }
+  ],
+  "material": {
+    "color": { "r": 0.9, "g": 0.75, "b": 0.68 },
+    "diffuse_coefficient": 0.72,
+    "specular_coefficient": 0.26,
+    "shininess": 18.0
+  },
+  "observer": {
+    "position": { "x": 1.8, "y": 1.6, "z": 4.2 }
+  },
+  "points": {
+    "local": [
+      { "name": "P1", "u": 0.2, "v": 0.2 },
+      { "name": "P2", "u": 0.55, "v": 0.15 },
+      { "name": "P3", "u": 0.15, "v": 0.55 }
+    ],
+    "global": {
+      "P1": { "x": 0.5, "y": 0.36, "z": 0.14 },
+      "P2": { "x": 1.175, "y": 0.27, "z": 0.105 },
+      "P3": { "x": 0.575, "y": 0.99, "z": 0.385 }
+    }
+  }
+}

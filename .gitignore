@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+
+labs/lab_01/src/*.egg-info/
+labs/lab_01/src/**/*.egg-info/
+labs/lab_01/exports/
