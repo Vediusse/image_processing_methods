@@ -1,0 +1,13 @@
+{
+  "integrand": "x_squared",
+  "interval": {
+    "left": 2.0,
+    "right": 5.0
+  },
+  "sample_sizes": [100, 1000, 10000, 100000],
+  "stratification_steps": [1.0, 0.5],
+  "importance_sampling_powers": [1, 2, 3],
+  "mis_powers": [1, 3],
+  "russian_roulette_thresholds": [0.5, 0.75, 0.95],
+  "seed": 20260322
+}

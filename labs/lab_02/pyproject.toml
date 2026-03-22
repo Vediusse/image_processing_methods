@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "image-processing-lab2"
+version = "1.0.0"
+description = "Lab 2 project: Monte Carlo integration methods on a fixed interval"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+  "numpy>=1.24",
+  "PySide6>=6.5",
+  "matplotlib>=3.7",
+  "rich>=13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+
+[project.scripts]
+image-lab2-cli = "image_lab2.cli:main"
+image-lab2-gui = "image_lab2.app:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

@@ -1,5 +1,12 @@
 #import "generated/values.typ": *
 
+#let student_name = "Рублёв Валерий"
+#let student_group = "P3332"
+#let teacher_name = "Потемкин Игорь Станиславович"
+#let university_name = "Университет ИТМО"
+#let city_name = "Санкт-Петербург"
+#let report_date = "2026"
+
 #set page(
   paper: "a4",
   margin: (x: 22mm, y: 18mm),
@@ -16,23 +23,28 @@
 #show heading.where(level: 2): set text(size: 12.5pt, weight: "bold")
 
 #align(center)[
-  #v(1.8cm)
+  #v(0.8cm)
+  #text(size: 12pt, weight: "bold")[#university_name]
+  #v(0.2cm)
+  #text(size: 11pt)[#city_name]
+  #v(2.0cm)
   #text(size: 13pt, weight: "bold")[ОТЧЕТ ПО ЛАБОРАТОРНОЙ РАБОТЕ №1]
   #v(0.4cm)
   #text(size: 12pt)[по курсу «Методы обработки изображений»]
   #v(0.8cm)
   #text(size: 14pt, weight: "bold")[Вычисление яркости в точках на поверхности треугольника]
-  #v(4.0cm)
+  #v(4.8cm)
 ]
 
 #align(right)[
   Выполнил: #student_name \
-  Дата: #report_date
+  Группа: #student_group \
+  Преподаватель: #teacher_name
 ]
 
-#v(7cm)
+#v(6.8cm)
 
-#align(center)[Москва, 2026]
+#align(center)[#city_name, #report_date]
 
 #pagebreak()
 

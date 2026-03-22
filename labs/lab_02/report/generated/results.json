@@ -1,0 +1,336 @@
+{
+  "true_value": 39.0,
+  "estimated_error_formula": "ΔI = I_true / sqrt(N)",
+  "methods": {
+    "simple_mc": [
+      {
+        "sample_size": 100,
+        "estimate": 38.55696819391042,
+        "absolute_error": 0.4430318060895786,
+        "relative_error": 0.011359789899732785,
+        "estimated_error": 1.7624896146675497
+      },
+      {
+        "sample_size": 1000,
+        "estimate": 38.271785263126134,
+        "absolute_error": 0.7282147368738663,
+        "relative_error": 0.018672172740355545,
+        "estimated_error": 0.5524244527477312
+      },
+      {
+        "sample_size": 10000,
+        "estimate": 38.83763827385484,
+        "absolute_error": 0.1623617261451571,
+        "relative_error": 0.004163121183209156,
+        "estimated_error": 0.1828216188407259
+      },
+      {
+        "sample_size": 100000,
+        "estimate": 38.97045739003147,
+        "absolute_error": 0.029542609968530087,
+        "relative_error": 0.0007575028197058997,
+        "estimated_error": 0.05772980924176902
+      }
+    ],
+    "stratified_1_0": [
+      {
+        "sample_size": 100,
+        "estimate": 38.44003455572604,
+        "absolute_error": 0.5599654442739634,
+        "relative_error": 0.014358088314717011,
+        "estimated_error": 0.659475650013861
+      },
+      {
+        "sample_size": 1000,
+        "estimate": 38.80000353876206,
+        "absolute_error": 0.19999646123793724,
+        "relative_error": 0.005128114390716339,
+        "estimated_error": 0.19892523188519584
+      },
+      {
+        "sample_size": 10000,
+        "estimate": 39.05903244108404,
+        "absolute_error": 0.059032441084042375,
+        "relative_error": 0.001513652335488266,
+        "estimated_error": 0.06193948329347363
+      },
+      {
+        "sample_size": 100000,
+        "estimate": 38.99348530863255,
+        "absolute_error": 0.006514691367449643,
+        "relative_error": 0.0001670433683961447,
+        "estimated_error": 0.01967533396006628
+      }
+    ],
+    "stratified_0_5": [
+      {
+        "sample_size": 100,
+        "estimate": 39.26560530572731,
+        "absolute_error": 0.26560530572731267,
+        "relative_error": 0.006810392454546479,
+        "estimated_error": 0.3281584359403968
+      },
+      {
+        "sample_size": 1000,
+        "estimate": 38.95283684143986,
+        "absolute_error": 0.04716315856013864,
+        "relative_error": 0.0012093117579522728,
+        "estimated_error": 0.1000668546349512
+      },
+      {
+        "sample_size": 10000,
+        "estimate": 39.02254281597014,
+        "absolute_error": 0.02254281597014085,
+        "relative_error": 0.0005780209223113039,
+        "estimated_error": 0.03141701513414821
+      },
+      {
+        "sample_size": 100000,
+        "estimate": 38.9896040005311,
+        "absolute_error": 0.010395999468897799,
+        "relative_error": 0.0002665640889460974,
+        "estimated_error": 0.009872707763466087
+      }
+    ],
+    "importance_x_pow_1": [
+      {
+        "sample_size": 100,
+        "estimate": 39.66899500730988,
+        "absolute_error": 0.6689950073098814,
+        "relative_error": 0.017153718136150804,
+        "estimated_error": 0.9212520156885159
+      },
+      {
+        "sample_size": 1000,
+        "estimate": 39.00444718181097,
+        "absolute_error": 0.004447181810967038,
+        "relative_error": 0.00011403030284530866,
+        "estimated_error": 0.2850213326763164
+      },
+      {
+        "sample_size": 10000,
+        "estimate": 39.07596238687579,
+        "absolute_error": 0.07596238687578705,
+        "relative_error": 0.0019477535096355653,
+        "estimated_error": 0.08838204615623443
+      },
+      {
+        "sample_size": 100000,
+        "estimate": 39.02110098711228,
+        "absolute_error": 0.021100987112276925,
+        "relative_error": 0.0005410509515968442,
+        "estimated_error": 0.027775963430353864
+      }
+    ],
+    "importance_x_pow_2": [
+      {
+        "sample_size": 100,
+        "estimate": 39.0,
+        "absolute_error": 0.0,
+        "relative_error": 0.0,
+        "estimated_error": 1.4282446375932696e-16
+      },
+      {
+        "sample_size": 1000,
+        "estimate": 39.0,
+        "absolute_error": 0.0,
+        "relative_error": 0.0,
+        "estimated_error": 4.4961154598036945e-17
+      },
+      {
+        "sample_size": 10000,
+        "estimate": 39.0,
+        "absolute_error": 0.0,
+        "relative_error": 0.0,
+        "estimated_error": 1.2869119730900776e-17
+      },
+      {
+        "sample_size": 100000,
+        "estimate": 39.0,
+        "absolute_error": 0.0,
+        "relative_error": 0.0,
+        "estimated_error": 4.079921892207495e-18
+      }
+    ],
+    "importance_x_pow_3": [
+      {
+        "sample_size": 100,
+        "estimate": 38.764087652859054,
+        "absolute_error": 0.2359123471409461,
+        "relative_error": 0.006049034542075542,
+        "estimated_error": 1.001305635045386
+      },
+      {
+        "sample_size": 1000,
+        "estimate": 39.1624069639154,
+        "absolute_error": 0.16240696391540155,
+        "relative_error": 0.0041642811260359375,
+        "estimated_error": 0.27990726387138626
+      },
+      {
+        "sample_size": 10000,
+        "estimate": 38.86722449554518,
+        "absolute_error": 0.13277550445481978,
+        "relative_error": 0.003404500114226148,
+        "estimated_error": 0.08808512737806598
+      },
+      {
+        "sample_size": 100000,
+        "estimate": 39.03994506727445,
+        "absolute_error": 0.03994506727445213,
+        "relative_error": 0.0010242324942167213,
+        "estimated_error": 0.02805148683376574
+      }
+    ],
+    "mis_balance": [
+      {
+        "sample_size": 100,
+        "estimate": 39.265064462085064,
+        "absolute_error": 0.2650644620850642,
+        "relative_error": 0.006796524668847799,
+        "estimated_error": 0.09926472599590694
+      },
+      {
+        "sample_size": 1000,
+        "estimate": 38.99693432197397,
+        "absolute_error": 0.0030656780260329697,
+        "relative_error": 7.860712887264025e-05,
+        "estimated_error": 0.04126244474661404
+      },
+      {
+        "sample_size": 10000,
+        "estimate": 38.97618531864461,
+        "absolute_error": 0.023814681355389666,
+        "relative_error": 0.0006106328552664017,
+        "estimated_error": 0.01332746214015594
+      },
+      {
+        "sample_size": 100000,
+        "estimate": 39.00610842714525,
+        "absolute_error": 0.006108427145250062,
+        "relative_error": 0.0001566263370576939,
+        "estimated_error": 0.004072941699095828
+      }
+    ],
+    "mis_power": [
+      {
+        "sample_size": 100,
+        "estimate": 38.44305592853362,
+        "absolute_error": 0.5569440714663827,
+        "relative_error": 0.014280617217086736,
+        "estimated_error": 0.7840488871032858
+      },
+      {
+        "sample_size": 1000,
+        "estimate": 38.89676949513283,
+        "absolute_error": 0.10323050486717023,
+        "relative_error": 0.0026469360222351338,
+        "estimated_error": 0.21917749016278879
+      },
+      {
+        "sample_size": 10000,
+        "estimate": 39.056037669261386,
+        "absolute_error": 0.05603766926138576,
+        "relative_error": 0.0014368633143945066,
+        "estimated_error": 0.06991966309723195
+      },
+      {
+        "sample_size": 100000,
+        "estimate": 39.02684403991195,
+        "absolute_error": 0.026844039911949835,
+        "relative_error": 0.0006883087156910214,
+        "estimated_error": 0.022180313919740957
+      }
+    ],
+    "russian_roulette_0_5": [
+      {
+        "sample_size": 100,
+        "estimate": 36.86489055817904,
+        "absolute_error": 2.1351094418209584,
+        "relative_error": 0.05474639594412714,
+        "estimated_error": 2.198093125759498
+      },
+      {
+        "sample_size": 1000,
+        "estimate": 39.85034200789394,
+        "absolute_error": 0.8503420078939428,
+        "relative_error": 0.021803641228049814,
+        "estimated_error": 0.6898409088001984
+      },
+      {
+        "sample_size": 10000,
+        "estimate": 39.35531571787689,
+        "absolute_error": 0.3553157178768913,
+        "relative_error": 0.009110659432740803,
+        "estimated_error": 0.21620482783806502
+      },
+      {
+        "sample_size": 100000,
+        "estimate": 39.159965559791935,
+        "absolute_error": 0.15996555979193516,
+        "relative_error": 0.00410168102030603,
+        "estimated_error": 0.06874120631345462
+      }
+    ],
+    "russian_roulette_0_75": [
+      {
+        "sample_size": 100,
+        "estimate": 40.65363082459528,
+        "absolute_error": 1.6536308245952824,
+        "relative_error": 0.04240079037423801,
+        "estimated_error": 2.768458394659108
+      },
+      {
+        "sample_size": 1000,
+        "estimate": 39.703907926679555,
+        "absolute_error": 0.7039079266795554,
+        "relative_error": 0.018048921196911677,
+        "estimated_error": 0.8985783642291688
+      },
+      {
+        "sample_size": 10000,
+        "estimate": 38.89768982068068,
+        "absolute_error": 0.10231017931931774,
+        "relative_error": 0.0026233379312645575,
+        "estimated_error": 0.2855105038953621
+      },
+      {
+        "sample_size": 100000,
+        "estimate": 38.99526209449249,
+        "absolute_error": 0.0047379055075111864,
+        "relative_error": 0.00012148475660285093,
+        "estimated_error": 0.09013760612809778
+      }
+    ],
+    "russian_roulette_0_95": [
+      {
+        "sample_size": 100,
+        "estimate": 42.09825187103573,
+        "absolute_error": 3.0982518710357283,
+        "relative_error": 0.07944235566758277,
+        "estimated_error": 3.5273229651005735
+      },
+      {
+        "sample_size": 1000,
+        "estimate": 40.05880954636131,
+        "absolute_error": 1.05880954636131,
+        "relative_error": 0.02714896272721308,
+        "estimated_error": 1.1212469781870822
+      },
+      {
+        "sample_size": 10000,
+        "estimate": 39.2134061618769,
+        "absolute_error": 0.21340616187689676,
+        "relative_error": 0.005471952868638379,
+        "estimated_error": 0.35524383846735824
+      },
+      {
+        "sample_size": 100000,
+        "estimate": 39.0732338226229,
+        "absolute_error": 0.07323382262290323,
+        "relative_error": 0.0018777903236641854,
+        "estimated_error": 0.11238901855011928
+      }
+    ]
+  }
+}
