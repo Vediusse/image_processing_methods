@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
-from typing import Callable, List
+from typing import List
 
 import numpy as np
 
 from image_lab2.math.distributions import PowerPdf
-from image_lab2.math.functions import evaluate_integrand
+from image_lab2.math.functions import analytic_integral_x_squared, evaluate_integrand
 from image_lab2.models.config import ExperimentConfig, Interval
 from image_lab2.models.results import MethodEstimate
 
@@ -53,7 +52,7 @@ class MonteCarloEstimators:
 
     def stratified(self, sample_size: int, step: float, seed: int, true_value: float) -> MethodEstimate:
         strata = self._build_strata(step)
-        allocations = self._allocate_samples(sample_size, len(strata))
+        allocations = self._allocate_samples(sample_size, strata)
         rng = np.random.default_rng(seed)
         estimate = 0.0
         variance_sum = 0.0
@@ -64,10 +63,10 @@ class MonteCarloEstimators:
             values = evaluate_integrand(self.config.integrand, x)
             weighted = interval.width * values
             estimate += float(np.mean(weighted))
-            variance_sum += (interval.width**2) * self._sample_variance(values) / allocation
+            variance_sum += (interval.width**2) * self._integrand_variance(interval) / allocation
         stderr = math.sqrt(max(variance_sum, 0.0))
         key = "stratified_{0}".format(str(step).replace(".", "_"))
-        display = "Стратификация h={0}".format(step)
+        display = "Адаптивная стратификация h={0}".format(step)
         return build_method_estimate(key, display, sample_size, true_value, estimate, stderr)
 
     def importance_sampling(self, sample_size: int, power: int, seed: int, true_value: float) -> MethodEstimate:
@@ -129,6 +128,8 @@ class MonteCarloEstimators:
         return build_method_estimate(key, display, sample_size, true_value, estimate, stderr)
 
     def _build_strata(self, step: float) -> List[Interval]:
+        if step <= 0.0:
+            raise ValueError("Шаг стратификации должен быть положительным.")
         left = self.interval.left
         right = self.interval.right
         edges = [left]
@@ -137,10 +138,30 @@ class MonteCarloEstimators:
         edges.append(right)
         return [Interval(edges[index], edges[index + 1]) for index in range(len(edges) - 1)]
 
-    def _allocate_samples(self, sample_size: int, strata_count: int) -> List[int]:
-        base = sample_size // strata_count
-        remainder = sample_size % strata_count
-        return [base + (1 if index < remainder else 0) for index in range(strata_count)]
+    def _allocate_samples(self, sample_size: int, strata: List[Interval]) -> List[int]:
+        weights = np.asarray(
+            [interval.width * max(math.sqrt(self._integrand_variance(interval)), 1e-12) for interval in strata],
+            dtype=np.float64,
+        )
+        if sample_size <= 0:
+            raise ValueError("Размер выборки должен быть положительным.")
+
+        if sample_size >= len(strata):
+            allocations = np.ones(len(strata), dtype=int)
+            remaining = sample_size - len(strata)
+        else:
+            allocations = np.zeros(len(strata), dtype=int)
+            remaining = sample_size
+
+        if remaining > 0:
+            scaled = weights / weights.sum() * remaining
+            extra = np.floor(scaled).astype(int)
+            allocations += extra
+            leftover = remaining - int(extra.sum())
+            if leftover > 0:
+                order = np.argsort(-(scaled - extra))
+                allocations[order[:leftover]] += 1
+        return allocations.tolist()
 
     def _sample_variance(self, values) -> float:
         if len(values) <= 1:
@@ -171,3 +192,12 @@ class MonteCarloEstimators:
             candidates.append(0.0)
         values = evaluate_integrand(self.config.integrand, np.asarray(candidates, dtype=np.float64))
         return float(np.max(values))
+
+    def _integrand_variance(self, interval: Interval) -> float:
+        if self.config.integrand != "x_squared":
+            raise ValueError("Для ЛР2 дисперсия стратификации реализована только для f(x)=x^2.")
+        width = interval.width
+        second_moment = analytic_integral_x_squared(interval) / width
+        fourth_moment = ((interval.right**5) - (interval.left**5)) / (5.0 * width)
+        variance = fourth_moment - second_moment * second_moment
+        return max(float(variance), 0.0)

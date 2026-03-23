@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Tuple
 
 import matplotlib
 
@@ -30,35 +31,37 @@ def main() -> None:
 
 
 def _plot_convergence(result, destination: Path) -> None:
-    figure = Figure(figsize=(10, 5), facecolor="white")
+    figure = Figure(figsize=(10, 5), facecolor="#f6f1e8")
     axes = figure.add_subplot(111)
+    axes.set_facecolor("#fffdf8")
     for series in result.by_method.values():
         x_values = [estimate.sample_size for estimate in series.estimates]
         y_values = [estimate.estimate for estimate in series.estimates]
-        axes.plot(x_values, y_values, marker="o", linewidth=1.4, label=series.display_name)
-    axes.axhline(result.true_value, linestyle="--", color="black", linewidth=1.3, label="Истинный интеграл")
+        axes.plot(x_values, y_values, marker="o", linewidth=1.7, label=series.display_name)
+    axes.axhline(result.true_value, linestyle="--", color="#d46d4f", linewidth=1.5, label="Истинный интеграл")
     axes.set_xscale("log")
     axes.set_xlabel("Размер выборки N")
     axes.set_ylabel("Оценка интеграла")
     axes.set_title("Сходимость методов Монте-Карло")
-    axes.grid(alpha=0.25)
+    axes.grid(color="#d8ccb6", alpha=0.45)
     axes.legend(fontsize=7, ncol=2)
     figure.savefig(destination, dpi=170, bbox_inches="tight")
 
 
 def _plot_error(result, destination: Path) -> None:
-    figure = Figure(figsize=(10, 5), facecolor="white")
+    figure = Figure(figsize=(10, 5), facecolor="#f6f1e8")
     axes = figure.add_subplot(111)
+    axes.set_facecolor("#fffdf8")
     for series in result.by_method.values():
         x_values = [estimate.sample_size for estimate in series.estimates]
         y_values = [estimate.absolute_error for estimate in series.estimates]
-        axes.plot(x_values, y_values, marker="o", linewidth=1.4, label=series.display_name)
+        axes.plot(x_values, y_values, marker="o", linewidth=1.7, label=series.display_name)
     axes.set_xscale("log")
     axes.set_yscale("log")
     axes.set_xlabel("Размер выборки N")
     axes.set_ylabel("Абсолютная ошибка")
     axes.set_title("Абсолютная ошибка методов")
-    axes.grid(alpha=0.25)
+    axes.grid(color="#d8ccb6", alpha=0.45)
     axes.legend(fontsize=7, ncol=2)
     figure.savefig(destination, dpi=170, bbox_inches="tight")
 
@@ -81,6 +84,7 @@ def _write_values_typ(config, result, destination: Path) -> None:
         [estimate for series in result.by_method.values() for estimate in series.estimates],
         key=lambda item: item.absolute_error,
     )
+    gain_value, gain_method = _best_stratification_gain(result)
     content = """#let true_value = "{true_value:.8f}"
 #let interval_label = "[{left:.1f}, {right:.1f}]"
 #let sample_sizes_label = "{sample_sizes}"
@@ -93,6 +97,8 @@ def _write_values_typ(config, result, destination: Path) -> None:
 #let best_n = "{best_n}"
 #let best_estimate = "{best_estimate:.8f}"
 #let best_abs_error = "{best_abs_error:.8f}"
+#let best_strat_gain = "{best_strat_gain}"
+#let best_strat_gain_method = "{best_strat_gain_method}"
 
 #let results_table = table(
   columns: 6,
@@ -116,9 +122,34 @@ def _write_values_typ(config, result, destination: Path) -> None:
         best_n=best.sample_size,
         best_estimate=best.estimate,
         best_abs_error=best.absolute_error,
+        best_strat_gain=gain_value,
+        best_strat_gain_method=gain_method,
         rows="\n".join(rows),
     )
     destination.write_text(content, encoding="utf-8")
+
+
+def _best_stratification_gain(result) -> Tuple[str, str]:
+    simple = result.by_method.get("simple_mc")
+    if simple is None:
+        return "—", "Нет базовой линии simple MC"
+
+    simple_map = {estimate.sample_size: estimate for estimate in simple.estimates}
+    comparisons = []
+    for key, series in result.by_method.items():
+        if not key.startswith("stratified_"):
+            continue
+        for estimate in series.estimates:
+            baseline = simple_map.get(estimate.sample_size)
+            if baseline is None or estimate.absolute_error <= 0.0:
+                continue
+            comparisons.append((baseline.absolute_error / estimate.absolute_error, series.display_name, estimate.sample_size))
+
+    if not comparisons:
+        return "—", "Нет данных по стратификации"
+
+    gain, method_name, sample_size = max(comparisons, key=lambda item: item[0])
+    return "{0:.2f}x".format(gain), "{0} при N={1}".format(method_name, sample_size)
 
 
 if __name__ == "__main__":
