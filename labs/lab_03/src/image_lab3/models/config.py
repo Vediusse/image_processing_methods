@@ -26,3 +26,4 @@ class ExperimentConfig:
     triangle: TriangleConfig
     circle: CircleConfig
     cosine_normal: Vector3
+    uniformity_rectangle_count: int = 4

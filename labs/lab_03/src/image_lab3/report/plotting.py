@@ -3,6 +3,8 @@ from __future__ import annotations
 import numpy as np
 from matplotlib.figure import Figure
 
+from image_lab3.report.uniformity_checks import rectangle_counts
+
 
 def create_distribution_figure(distribution, facecolor: str = "#10141c") -> Figure:
     figure = Figure(figsize=(9, 5), facecolor=facecolor)
@@ -28,22 +30,31 @@ def plot_distribution_on_axes(scatter_axes, hist_axes, distribution) -> None:
     _set_equal_limits(scatter_axes, sample)
 
     if distribution.key == "triangle":
-        alpha = distribution.auxiliary["alpha"]
-        hist_axes.hist(alpha, bins=20, range=(0.0, 1.0), density=True, color="#71d8ff", alpha=0.78, label="эмпирическое")
-        x = np.linspace(0.0, 1.0, 200)
-        hist_axes.plot(x, 2.0 * (1.0 - x), color="#f1fa8c", linewidth=2.0, label="теория 2(1-α)")
-        hist_axes.set_title("Распределение барицентрической координаты α", color="#e9f1fb")
-        hist_axes.set_xlabel("α")
-        hist_axes.set_ylabel("Плотность")
-        hist_axes.legend(fontsize=8, loc="upper right")
+        labels, counts = rectangle_counts(
+            distribution.auxiliary["beta"],
+            distribution.auxiliary["gamma"],
+            distribution.auxiliary["proof_rectangles"],
+        )
+        _plot_rectangle_count_check(
+            hist_axes,
+            labels,
+            counts,
+            title="Точки по одинаковым прямоугольникам в треугольнике",
+            color="#71d8ff",
+        )
     elif distribution.key == "circle":
-        values = distribution.auxiliary["radius_squared_normalized"]
-        hist_axes.hist(values, bins=20, range=(0.0, 1.0), density=True, color="#50fa7b", alpha=0.85, label="эмпирическое")
-        hist_axes.plot([0.0, 1.0], [1.0, 1.0], color="#f1fa8c", linewidth=2.0, label="теория 1")
-        hist_axes.set_title("Распределение r²/R²", color="#e9f1fb")
-        hist_axes.set_xlabel("r²/R²")
-        hist_axes.set_ylabel("Плотность")
-        hist_axes.legend(fontsize=8, loc="upper right")
+        labels, counts = rectangle_counts(
+            distribution.auxiliary["local_x"],
+            distribution.auxiliary["local_y"],
+            distribution.auxiliary["proof_rectangles"],
+        )
+        _plot_rectangle_count_check(
+            hist_axes,
+            labels,
+            counts,
+            title="Точки по одинаковым прямоугольникам в круге",
+            color="#50fa7b",
+        )
     elif distribution.key == "sphere":
         values = distribution.auxiliary["z"]
         hist_axes.hist(values, bins=20, range=(-1.0, 1.0), density=True, color="#ffb86c", alpha=0.85, label="эмпирическое")
@@ -67,6 +78,18 @@ def plot_distribution_on_axes(scatter_axes, hist_axes, distribution) -> None:
     hist_axes.yaxis.label.set_color("#dde7f2")
     hist_axes.title.set_color("#dde7f2")
     hist_axes.grid(alpha=0.2)
+
+
+def _plot_rectangle_count_check(hist_axes, labels, counts, title: str, color: str) -> None:
+    positions = np.arange(len(labels))
+    hist_axes.bar(positions, counts, color=color, alpha=0.82, label="число точек")
+    expected = float(np.mean(counts))
+    hist_axes.axhline(expected, color="#f1fa8c", linewidth=2.0, linestyle="--", label="среднее")
+    hist_axes.set_xticks(positions, labels)
+    hist_axes.set_title(title, color="#e9f1fb")
+    hist_axes.set_xlabel("Прямоугольники")
+    hist_axes.set_ylabel("Число точек")
+    hist_axes.legend(fontsize=8, loc="upper right")
 
 
 def _style_axes(scatter_axes, hist_axes) -> None:

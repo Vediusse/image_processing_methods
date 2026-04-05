@@ -73,6 +73,7 @@ class MainWindow(QMainWindow):
         self.circle_normal_input = QLineEdit()
         self.circle_radius_input = QLineEdit()
         self.cosine_normal_input = QLineEdit()
+        self.uniformity_rectangles_input = QLineEdit()
         form.addRow("Число выборок", self.sample_count_input)
         form.addRow("Seed", self.seed_input)
         form.addRow("Треугольник A", self.triangle_a_input)
@@ -82,6 +83,7 @@ class MainWindow(QMainWindow):
         form.addRow("Нормаль круга", self.circle_normal_input)
         form.addRow("Радиус круга", self.circle_radius_input)
         form.addRow("Нормаль cos-распр.", self.cosine_normal_input)
+        form.addRow("Прямоугольники для проверки", self.uniformity_rectangles_input)
         left_layout.addWidget(form_widget)
 
         self.hint_label = QLabel(
@@ -213,6 +215,7 @@ class MainWindow(QMainWindow):
         self.circle_normal_input.setText(self._format_vec(config.circle.normal))
         self.circle_radius_input.setText(str(config.circle.radius))
         self.cosine_normal_input.setText(self._format_vec(config.cosine_normal))
+        self.uniformity_rectangles_input.setText(str(config.uniformity_rectangle_count))
 
     def _config_from_form(self) -> ExperimentConfig:
         return ExperimentConfig(
@@ -229,6 +232,7 @@ class MainWindow(QMainWindow):
                 radius=float(self.circle_radius_input.text().strip()),
             ),
             cosine_normal=self._parse_vector(self.cosine_normal_input.text()),
+            uniformity_rectangle_count=int(self.uniformity_rectangles_input.text().strip()),
         )
 
     def _parse_point(self, text: str) -> Point3:

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib
+import numpy as np
 
 matplotlib.use("Agg")
 
@@ -46,7 +47,11 @@ def _write_typst_values(config, result, destination: Path) -> None:
             )
         )
 
+    triangle_rectangles = _triangle_rectangles_table(result.distributions["triangle"].auxiliary)
+    circle_rectangles = _circle_rectangles_table(result.distributions["circle"].auxiliary)
+
     content = """#let sample_count_label = "{sample_count}"
+#let uniformity_rectangle_count = "{uniformity_rectangle_count}"
 #let triangle_a = "({triangle_ax:.3f}, {triangle_ay:.3f}, {triangle_az:.3f})"
 #let triangle_b = "({triangle_bx:.3f}, {triangle_by:.3f}, {triangle_bz:.3f})"
 #let triangle_c = "({triangle_cx:.3f}, {triangle_cy:.3f}, {triangle_cz:.3f})"
@@ -83,8 +88,27 @@ def _write_typst_values(config, result, destination: Path) -> None:
   [Распределение], [Inside ratio], [Constraint error], [Mean error], [Uniformity score],
 {metrics_rows}
 )
-""".format(
+
+#let triangle_rectangles_table = table(
+  columns: 3,
+  inset: 6pt,
+  stroke: (x, y) => if y == 0 {{ 0.9pt + rgb("#3f5974") }} else {{ 0.5pt + rgb("#8aa0b5") }},
+  align: center,
+  [Прямоугольник], [Диапазон в (u, v)], [Число точек],
+{triangle_rectangles}
+)
+
+#let circle_rectangles_table = table(
+  columns: 3,
+  inset: 6pt,
+  stroke: (x, y) => if y == 0 {{ 0.9pt + rgb("#3f5974") }} else {{ 0.5pt + rgb("#8aa0b5") }},
+  align: center,
+  [Прямоугольник], [Диапазон в локальных (x, y)], [Число точек],
+{circle_rectangles}
+)
+    """.format(
         sample_count=result.sample_count,
+        uniformity_rectangle_count=config.uniformity_rectangle_count,
         triangle_ax=config.triangle.a.x,
         triangle_ay=config.triangle.a.y,
         triangle_az=config.triangle.a.z,
@@ -121,8 +145,55 @@ def _write_typst_values(config, result, destination: Path) -> None:
         cosine_mean=result.distributions["cosine"].metrics.centroid_or_mean_error,
         cosine_uniformity=result.distributions["cosine"].metrics.uniformity_score,
         metrics_rows="\n".join(metrics_rows),
+        triangle_rectangles=triangle_rectangles,
+        circle_rectangles=circle_rectangles,
     )
     destination.write_text(content, encoding="utf-8")
+
+
+def _triangle_rectangles_table(auxiliary) -> str:
+    u = auxiliary["beta"]
+    v = auxiliary["gamma"]
+    rectangles = auxiliary["proof_rectangles"]
+    return _format_rectangle_rows(
+        u,
+        v,
+        rectangles,
+        x_label="u",
+        y_label="v",
+    )
+
+
+def _circle_rectangles_table(auxiliary) -> str:
+    local_x = auxiliary["local_x"]
+    local_y = auxiliary["local_y"]
+    rectangles = auxiliary["proof_rectangles"]
+    return _format_rectangle_rows(
+        local_x,
+        local_y,
+        rectangles,
+        x_label="x",
+        y_label="y",
+    )
+
+
+def _format_rectangle_rows(values_x, values_y, rectangles, x_label: str, y_label: str) -> str:
+    rows = []
+    for name, x0, x1, y0, y1 in rectangles:
+        count = int(np.sum((values_x >= x0) & (values_x <= x1) & (values_y >= y0) & (values_y <= y1)))
+        rows.append(
+            "  [{name}], [{x_label}∈[{x0:.2f}; {x1:.2f}], {y_label}∈[{y0:.2f}; {y1:.2f}]], [{count}],".format(
+                name=name,
+                x_label=x_label,
+                x0=x0,
+                x1=x1,
+                y_label=y_label,
+                y0=y0,
+                y1=y1,
+                count=count,
+            )
+        )
+    return "\n".join(rows)
 
 
 if __name__ == "__main__":

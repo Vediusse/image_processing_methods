@@ -32,6 +32,7 @@ def load_config(path: Union[str, Path]) -> ExperimentConfig:
             radius=float(data["circle"]["radius"]),
         ),
         cosine_normal=_vector(data["cosine_normal"]),
+        uniformity_rectangle_count=int(data.get("uniformity_rectangle_count", 4)),
     )
 
 
@@ -50,6 +51,7 @@ def save_config(path: Union[str, Path], config: ExperimentConfig) -> None:
             "radius": config.circle.radius,
         },
         "cosine_normal": _serialize_vec(config.cosine_normal),
+        "uniformity_rectangle_count": config.uniformity_rectangle_count,
     }
     Path(path).write_text(json.dumps(content, indent=2, ensure_ascii=False), encoding="utf-8")
 

@@ -1,0 +1,8 @@
+{
+  "triangle_count": 60,
+  "light_count": 8,
+  "max_radiance": "сохраняется в HDR и анализируется отдельно",
+  "mean_radiance": "определяется текущими параметрами рендера",
+  "reference_spp": 12,
+  "convergence": []
+}

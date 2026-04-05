@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from image_lab3.models.results import DistributionResult, ExperimentResult
+from image_lab3.report.uniformity_checks import circle_rectangles, triangle_rectangles
 from image_lab3.services.distribution_generators import DistributionGenerators
 from image_lab3.services.validators import DistributionValidators
 
@@ -22,6 +23,8 @@ class ExperimentRunner:
         distributions = {}
 
         triangle_points, triangle_aux = self.generators.triangle_points(config.triangle, config.sample_count, rng)
+        triangle_aux["proof_rectangles"] = triangle_rectangles(config.uniformity_rectangle_count)
+        triangle_aux["proof_rectangle_count"] = config.uniformity_rectangle_count
         triangle_vertices = np.array([
             config.triangle.a.to_tuple(),
             config.triangle.b.to_tuple(),
@@ -36,6 +39,8 @@ class ExperimentRunner:
         )
 
         circle_points, circle_aux = self.generators.circle_points(config.circle, config.sample_count, rng)
+        circle_aux["proof_rectangles"] = circle_rectangles(config.circle.radius, config.uniformity_rectangle_count)
+        circle_aux["proof_rectangle_count"] = config.uniformity_rectangle_count
         distributions["circle"] = DistributionResult(
             key="circle",
             title="Круг",

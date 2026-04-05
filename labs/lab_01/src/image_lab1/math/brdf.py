@@ -19,8 +19,19 @@ def calculate_brdf(
     direction_to_light: Vector3,
     direction_to_observer: Vector3,
 ) -> float:
-    half_vector = calculate_half_vector(direction_to_light, direction_to_observer)
-    n_dot_h = max(surface_normal.normalized().dot(half_vector), 0.0)
+    normal = surface_normal.normalized()
+    light_direction = direction_to_light.normalized()
+    observer_direction = direction_to_observer.normalized()
+
+    # A back-facing point may still receive irradiance from the light setup,
+    # but it must not produce visible brightness for an observer on the opposite side.
+    n_dot_l = normal.dot(light_direction)
+    n_dot_v = normal.dot(observer_direction)
+    if n_dot_l <= 0.0 or n_dot_v <= 0.0:
+        return 0.0
+
+    half_vector = calculate_half_vector(light_direction, observer_direction)
+    n_dot_h = max(normal.dot(half_vector), 0.0)
     diffuse = material.diffuse_coefficient / math.pi
     specular = material.specular_coefficient * ((material.shininess + 2.0) / (2.0 * math.pi)) * (
         n_dot_h ** material.shininess

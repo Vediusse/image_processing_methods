@@ -1,6 +1,6 @@
 #import "generated/values.typ": *
 
-#let student_name = "Рублёв Валерий"
+#let student_name = "Казакова Кристина"
 #let student_group = "P3332"
 #let teacher_name = "Потемкин Игорь Станиславович"
 #let university_name = "Университет ИТМО"

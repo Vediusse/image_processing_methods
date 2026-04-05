@@ -110,8 +110,7 @@ class MainWindow(QMainWindow):
         caption = QLabel("Что изменено")
         caption.setObjectName("sideCardTitle")
         blurb = QLabel(
-            "Стратификация теперь использует аналитическую локальную дисперсию и распределение "
-            "точек по Нейману, поэтому уменьшение шага действительно снижает разброс оценки."
+            "=)"
         )
         blurb.setObjectName("sideCardText")
         blurb.setWordWrap(True)
@@ -282,10 +281,16 @@ class MainWindow(QMainWindow):
     def _apply_style(self) -> None:
         self.setStyleSheet(
             """
-            QMainWindow, QWidget {
+            QMainWindow {
                 background: #f3ede2;
+            }
+            QWidget {
+                background: transparent;
                 color: #17323a;
                 font-size: 13px;
+            }
+            QLabel {
+                background: transparent;
             }
             QScrollArea {
                 border: none;

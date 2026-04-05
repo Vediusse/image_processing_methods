@@ -1,0 +1,51 @@
+{
+  "camera": {
+    "position": [0.0, 1.0, 3.8],
+    "target": [0.0, 1.0, 0.0],
+    "up": [0.0, 1.0, 0.0],
+    "fov_degrees": 36.0
+  },
+  "render": {
+    "width": 500,
+    "height": 500,
+    "samples_per_pixel": 6,
+    "max_depth": 6,
+    "min_depth": 2,
+    "gamma": 2.2,
+    "normalization": "max",
+    "normalization_value": 1.0,
+    "seed": 20260405,
+    "background": [0.0, 0.0, 0.0]
+  },
+  "materials": [
+    { "name": "white", "diffuse": [0.75, 0.75, 0.75], "mirror": [0.0, 0.0, 0.0] },
+    { "name": "red", "diffuse": [0.75, 0.15, 0.15], "mirror": [0.0, 0.0, 0.0] },
+    { "name": "green", "diffuse": [0.15, 0.75, 0.2], "mirror": [0.0, 0.0, 0.0] },
+    { "name": "mirror", "diffuse": [0.05, 0.05, 0.05], "mirror": [0.9, 0.9, 0.9] }
+  ],
+  "triangles": [
+    { "vertices": [[-1.2, 0.0, -1.2], [1.2, 0.0, -1.2], [1.2, 0.0, 1.2]], "material": "white" },
+    { "vertices": [[-1.2, 0.0, -1.2], [1.2, 0.0, 1.2], [-1.2, 0.0, 1.2]], "material": "white" },
+    { "vertices": [[-1.2, 2.2, -1.2], [1.2, 2.2, 1.2], [1.2, 2.2, -1.2]], "material": "white" },
+    { "vertices": [[-1.2, 2.2, -1.2], [-1.2, 2.2, 1.2], [1.2, 2.2, 1.2]], "material": "white" },
+    { "vertices": [[-1.2, 0.0, -1.2], [1.2, 2.2, -1.2], [1.2, 0.0, -1.2]], "material": "white" },
+    { "vertices": [[-1.2, 0.0, -1.2], [-1.2, 2.2, -1.2], [1.2, 2.2, -1.2]], "material": "white" },
+    { "vertices": [[-1.2, 0.0, -1.2], [-1.2, 0.0, 1.2], [-1.2, 2.2, 1.2]], "material": "red" },
+    { "vertices": [[-1.2, 0.0, -1.2], [-1.2, 2.2, 1.2], [-1.2, 2.2, -1.2]], "material": "red" },
+    { "vertices": [[1.2, 0.0, -1.2], [1.2, 2.2, 1.2], [1.2, 0.0, 1.2]], "material": "green" },
+    { "vertices": [[1.2, 0.0, -1.2], [1.2, 2.2, -1.2], [1.2, 2.2, 1.2]], "material": "green" },
+    { "vertices": [[-0.35, 2.18, -0.35], [0.35, 2.18, -0.35], [0.35, 2.18, 0.35]], "material": "white", "emission": [14.0, 13.4, 12.8] },
+    { "vertices": [[-0.35, 2.18, -0.35], [0.35, 2.18, 0.35], [-0.35, 2.18, 0.35]], "material": "white", "emission": [14.0, 13.4, 12.8] }
+  ],
+  "obj_meshes": [
+    {
+      "path": "pyramid.obj",
+      "material": "mirror",
+      "emission": [0.0, 0.0, 0.0],
+      "transform": {
+        "translate": [0.0, 0.0, 0.0],
+        "scale": 1.0
+      }
+    }
+  ]
+}

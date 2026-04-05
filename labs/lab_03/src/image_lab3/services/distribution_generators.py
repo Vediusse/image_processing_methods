@@ -41,6 +41,10 @@ class DistributionGenerators:
         auxiliary = {
             "radius_squared_normalized": (r / circle.radius) ** 2,
             "distances": r,
+            "phi": phi,
+            "local_x": local_x,
+            "local_y": local_y,
+            "radius": circle.radius,
             "normal": np.array(normal.to_tuple()),
         }
         return points, auxiliary

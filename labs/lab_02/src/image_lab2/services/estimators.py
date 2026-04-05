@@ -66,7 +66,7 @@ class MonteCarloEstimators:
             variance_sum += (interval.width**2) * self._integrand_variance(interval) / allocation
         stderr = math.sqrt(max(variance_sum, 0.0))
         key = "stratified_{0}".format(str(step).replace(".", "_"))
-        display = "Адаптивная стратификация h={0}".format(step)
+        display = "стратификация h={0}".format(step)
         return build_method_estimate(key, display, sample_size, true_value, estimate, stderr)
 
     def importance_sampling(self, sample_size: int, power: int, seed: int, true_value: float) -> MethodEstimate:

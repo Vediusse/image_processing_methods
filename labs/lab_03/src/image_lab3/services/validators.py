@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 from image_lab3.models.results import DistributionMetrics
+from image_lab3.report.uniformity_checks import rectangle_counts, relative_spread
 
 
 class DistributionValidators:
@@ -18,27 +19,23 @@ class DistributionValidators:
         )
         centroid = sum(triangle_vertices) / 3.0
         centroid_error = float(np.linalg.norm(points.mean(axis=0) - centroid))
-        hist, edges = np.histogram(alpha, bins=20, range=(0.0, 1.0), density=True)
-        centers = 0.5 * (edges[:-1] + edges[1:])
-        target = 2.0 * (1.0 - centers)
-        uniformity = float(np.sqrt(np.mean((hist - target) ** 2)))
+        _, counts = rectangle_counts(beta, gamma, auxiliary["proof_rectangles"])
+        uniformity = relative_spread(counts)
         return DistributionMetrics(
             title="Равномерные точки в треугольнике",
             inside_ratio=float(np.mean(inside)),
             norm_error=plane_error,
             centroid_or_mean_error=centroid_error,
             uniformity_score=uniformity,
-            note="Равномерность подтверждается сравнением распределения барицентрической координаты α с теоретической плотностью 2(1-α), а принадлежность области — знаками барицентрических координат и отклонением от плоскости треугольника.",
+            note="Равномерность проверяется новым методом: в локальных координатах (u, v) автоматически строятся одинаковые прямоугольники внутри треугольника, после чего сравнивается число точек в каждом из них. Если счётчики близки, распределение считаем равномерным на глазок.",
         )
 
     def circle_metrics(self, points, auxiliary, center, radius) -> DistributionMetrics:
         distances = np.linalg.norm(points - center, axis=1)
         plane_projection = np.abs((points - center) @ auxiliary["normal"])
         inside = np.logical_and(distances <= radius + 1e-9, plane_projection <= 1e-9)
-        hist, edges = np.histogram(auxiliary["radius_squared_normalized"], bins=20, range=(0.0, 1.0), density=True)
-        centers = 0.5 * (edges[:-1] + edges[1:])
-        target = np.ones_like(centers)
-        uniformity = float(np.sqrt(np.mean((hist - target) ** 2)))
+        _, counts = rectangle_counts(auxiliary["local_x"], auxiliary["local_y"], auxiliary["proof_rectangles"])
+        uniformity = relative_spread(counts)
         centroid_error = float(np.linalg.norm(points.mean(axis=0) - center))
         return DistributionMetrics(
             title="Равномерные точки в круге",
@@ -46,7 +43,7 @@ class DistributionValidators:
             norm_error=float(np.mean(plane_projection)),
             centroid_or_mean_error=centroid_error,
             uniformity_score=uniformity,
-            note="Равномерность проверяется тем, что величина r²/R² должна быть равномерна на [0, 1], а принадлежность кругу — ограничением по радиусу и малым отклонением от плоскости круга.",
+            note="Равномерность проверяется новым методом: внутри круга автоматически строятся одинаковые прямоугольники в локальных координатах, затем сравнивается число точек в каждом прямоугольнике. Если значения близки, распределение считаем равномерным на глазок.",
         )
 
     def sphere_metrics(self, points, auxiliary) -> DistributionMetrics:
