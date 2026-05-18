@@ -1,8 +1,29 @@
 {
-  "triangle_count": 60,
-  "light_count": 8,
-  "max_radiance": "сохраняется в HDR и анализируется отдельно",
-  "mean_radiance": "определяется текущими параметрами рендера",
-  "reference_spp": 12,
-  "convergence": []
+  "triangle_count": 26,
+  "light_count": 2,
+  "max_radiance": 15.98071406451757,
+  "mean_radiance": 0.449008630263988,
+  "reference_spp": 8,
+  "convergence": [
+    {
+      "spp": 1,
+      "mse_to_reference": 0.07181649234894957,
+      "mean_luminance": 0.449333270673971
+    },
+    {
+      "spp": 2,
+      "mse_to_reference": 0.03740677276289432,
+      "mean_luminance": 0.44868449685648565
+    },
+    {
+      "spp": 4,
+      "mse_to_reference": 0.024381864367073052,
+      "mean_luminance": 0.4485463462008503
+    },
+    {
+      "spp": 6,
+      "mse_to_reference": 0.019963593086521705,
+      "mean_luminance": 0.4485775535213988
+    }
+  ]
 }

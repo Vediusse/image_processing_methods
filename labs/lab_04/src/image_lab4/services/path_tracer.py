@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Optional
-import os
 
 import numpy as np
 import torch
@@ -11,6 +11,7 @@ from image_lab4.io.obj_loader import load_obj_triangles
 from image_lab4.math.geometry import reflect, sample_cosine_weighted_hemisphere, sample_point_on_triangle, triangle_area, triangle_normal
 from image_lab4.models.scene import HitRecord, Material, Ray, RenderArtifact, ResolvedTriangle, Scene, SceneConfig
 from image_lab4.models.vector import EPSILON, ColorRGB, Point3, Vec3
+from image_lab4.services.image_filters import FilterSettings, ImageFilterService
 
 
 class PathTracer:
@@ -71,7 +72,8 @@ class PathTracer:
                 )
             )
         lights = [triangle for triangle in resolved if triangle.emission.max_component() > 0.0]
-        if not lights:
+        point_lights = list(config.point_lights)
+        if not lights and not point_lights:
             raise ValueError("Scene must contain at least one emissive triangle light.")
         if strict_resolution and (config.render.width < 500 or config.render.height < 500):
             raise ValueError("Resolution must be at least 500x500 according to the assignment.")
@@ -90,16 +92,19 @@ class PathTracer:
             [index for index, triangle in enumerate(resolved) if triangle.emission.max_component() > 0.0],
             dtype=int,
         )
-        light_weights = np.array(
-            [resolved[index].area * resolved[index].emission.average() for index in light_indices],
-            dtype=float,
-        )
+        area_light_weights = [max(self._area_light_flux_weight(resolved[index]), EPSILON) for index in light_indices]
+        point_light_weights = [max(self._point_light_flux_weight(light), EPSILON) for light in point_lights]
+        light_weights = np.array(area_light_weights + point_light_weights, dtype=float)
         light_probabilities = light_weights / float(light_weights.sum())
+        point_light_positions = np.array([light.position.to_tuple() for light in point_lights], dtype=float).reshape(-1, 3)
+        point_light_intensities = np.array([light.intensity.to_tuple() for light in point_lights], dtype=float).reshape(-1, 3)
         return Scene(
             camera=config.camera,
             render=config.render,
+            denoise=config.denoise,
             triangles=resolved,
             lights=lights,
+            point_lights=point_lights,
             camera_forward=forward,
             camera_right=right,
             camera_up=up,
@@ -110,7 +115,19 @@ class PathTracer:
             triangle_normals=triangle_normals,
             light_indices=light_indices,
             light_probabilities=light_probabilities,
+            point_light_positions=point_light_positions,
+            point_light_intensities=point_light_intensities,
         )
+
+    def _area_light_flux_weight(self, light: ResolvedTriangle) -> float:
+        # For a Lambertian area emitter with radiance Le, total flux is proportional
+        # to pi * area * Le. The common pi factor matters when mixing with point lights.
+        return float(np.pi * light.area * light.emission.average())
+
+    def _point_light_flux_weight(self, light) -> float:
+        # Point-light intensity is interpreted as radiant intensity (power per steradian).
+        # Total flux over the sphere is 4 * pi * I.
+        return float(4.0 * np.pi * light.intensity.average())
 
     def _validate_materials(self, materials) -> None:
         for material in materials:
@@ -182,12 +199,29 @@ class PathTracer:
         return np.array(radiance.to_tuple(), dtype=float)
 
     def _sample_direct_lighting(self, scene: Scene, hit: HitRecord, normal: Vec3, rng) -> ColorRGB:
-        if not scene.lights:
+        if not scene.lights and not scene.point_lights:
             return ColorRGB.zero()
-        sampled_light_slot = int(rng.choice(len(scene.light_indices), p=scene.light_probabilities))
+        sampled_light_slot = int(rng.choice(len(scene.light_probabilities), p=scene.light_probabilities))
+        light_probability = float(scene.light_probabilities[sampled_light_slot])
+        if sampled_light_slot >= len(scene.light_indices):
+            point_index = sampled_light_slot - len(scene.light_indices)
+            light = scene.point_lights[point_index]
+            to_light = light.position - hit.position
+            distance_squared = max(to_light.dot(to_light), EPSILON)
+            direction = to_light / np.sqrt(distance_squared)
+            cosine_surface = max(normal.dot(direction), 0.0)
+            if cosine_surface <= 0.0:
+                return ColorRGB.zero()
+            shadow_ray = Ray(origin=hit.position + direction * 1e-4, direction=direction)
+            shadow_hit = self._intersect_scene(scene, shadow_ray)
+            distance = float(np.sqrt(distance_squared))
+            if shadow_hit is not None and shadow_hit.distance + 1e-3 < distance:
+                return ColorRGB.zero()
+            bsdf = hit.triangle.material.diffuse / np.pi
+            return light.intensity * bsdf * (cosine_surface / (distance_squared * max(light_probability, 1e-8)))
+
         triangle_index = int(scene.light_indices[sampled_light_slot])
         light = scene.triangles[triangle_index]
-        light_probability = float(scene.light_probabilities[sampled_light_slot])
         light_point = sample_point_on_triangle(light.a, light.b, light.c, rng.random(), rng.random())
         to_light = light_point - hit.position
         distance_squared = max(to_light.dot(to_light), EPSILON)
@@ -295,35 +329,22 @@ class PathTracer:
         clipped = np.clip(radiance, 0.0, None)
         firefly_limit = np.percentile(clipped, 99.4)
         clipped = np.clip(clipped, 0.0, max(firefly_limit, 1e-6))
-        strength = 0.14 if scene.render.samples_per_pixel >= 8 else 0.24
-        return self._edge_aware_denoise(clipped, blend=strength)
-
-    def _edge_aware_denoise(self, image: np.ndarray, blend: float) -> np.ndarray:
-        padded = np.pad(image, ((1, 1), (1, 1), (0, 0)), mode="edge")
-        center = padded[1:-1, 1:-1]
-        spatial_weights = [
-            (0.06, padded[:-2, :-2]),
-            (0.10, padded[:-2, 1:-1]),
-            (0.06, padded[:-2, 2:]),
-            (0.10, padded[1:-1, :-2]),
-            (0.36, padded[1:-1, 1:-1]),
-            (0.10, padded[1:-1, 2:]),
-            (0.06, padded[2:, :-2]),
-            (0.10, padded[2:, 1:-1]),
-            (0.06, padded[2:, 2:]),
-        ]
-        center_luma = 0.2126 * center[:, :, 0] + 0.7152 * center[:, :, 1] + 0.0722 * center[:, :, 2]
-        accum = np.zeros_like(center)
-        weight_sum = np.zeros(center.shape[:2] + (1,), dtype=center.dtype)
-        sigma = max(float(np.percentile(center_luma, 75)), 1e-3) * 0.35
-        for spatial_weight, neighbor in spatial_weights:
-            neighbor_luma = 0.2126 * neighbor[:, :, 0] + 0.7152 * neighbor[:, :, 1] + 0.0722 * neighbor[:, :, 2]
-            range_weight = np.exp(-np.abs(neighbor_luma - center_luma) / sigma)[:, :, None]
-            total_weight = spatial_weight * range_weight
-            accum += neighbor * total_weight
-            weight_sum += total_weight
-        filtered = accum / np.maximum(weight_sum, 1e-8)
-        return center * (1.0 - blend) + filtered * blend
+        denoise = scene.denoise
+        if denoise is None or not denoise.enabled:
+            return clipped
+        return ImageFilterService().apply(
+            clipped,
+            FilterSettings(
+                name=denoise.filter_name,
+                radius=denoise.radius,
+                sigma_spatial=denoise.sigma_spatial,
+                sigma_color=denoise.sigma_color,
+                sigma_depth=denoise.sigma_depth,
+                sigma_normal=denoise.sigma_normal,
+                strength=denoise.strength,
+                preserve_object_flux=denoise.preserve_object_flux,
+            ),
+        )
 
     def _build_summary(self, scene: Scene, radiance: np.ndarray) -> str:
         max_radiance = float(np.max(radiance))
@@ -332,15 +353,17 @@ class PathTracer:
             "Path tracing завершен.\n"
             "Backend: {0}\n"
             "Треугольников: {1}\n"
-            "Источников света: {2}\n"
-            "Разрешение: {3}x{4}\n"
-            "SPP: {5}\n"
-            "Максимальная абсолютная яркость: {6:.6f}\n"
-            "Средняя абсолютная яркость: {7:.6f}\n"
-            "Нормировка: {8}, gamma={9:.2f}".format(
+            "Area источников: {2}\n"
+            "Point источников: {3}\n"
+            "Разрешение: {4}x{5}\n"
+            "SPP: {6}\n"
+            "Максимальная абсолютная яркость: {7:.6f}\n"
+            "Средняя абсолютная яркость: {8:.6f}\n"
+            "Нормировка: {9}, gamma={10:.2f}".format(
                 self.torch_device,
                 len(scene.triangles),
                 len(scene.lights),
+                len(scene.point_lights),
                 scene.render.width,
                 scene.render.height,
                 scene.render.samples_per_pixel,
@@ -375,6 +398,8 @@ class PathTracer:
         light_indices = torch.tensor(scene.light_indices, dtype=torch.long, device=device)
         light_probabilities = torch.tensor(scene.light_probabilities, dtype=torch.float32, device=device)
         light_areas = torch.tensor([scene.triangles[int(index)].area for index in scene.light_indices], dtype=torch.float32, device=device)
+        point_light_positions = torch.tensor(scene.point_light_positions, dtype=torch.float32, device=device)
+        point_light_intensities = torch.tensor(scene.point_light_intensities, dtype=torch.float32, device=device)
 
         camera_position = torch.tensor(scene.camera.position.to_tuple(), dtype=torch.float32, device=device)
         camera_forward = torch.tensor(scene.camera_forward.to_tuple(), dtype=torch.float32, device=device)
@@ -460,6 +485,8 @@ class PathTracer:
                         light_indices,
                         light_probabilities,
                         light_areas,
+                        point_light_positions,
+                        point_light_intensities,
                         hit_tri_indices,
                         positions,
                         oriented_normals,
@@ -569,6 +596,8 @@ class PathTracer:
         light_indices,
         light_probabilities,
         light_areas,
+        point_light_positions,
+        point_light_intensities,
         hit_tri_indices,
         positions,
         normals,
@@ -577,27 +606,74 @@ class PathTracer:
     ):
         ray_count = positions.shape[0]
         sampled_slots = torch.multinomial(light_probabilities, ray_count, replacement=True, generator=generator)
-        sampled_triangle_indices = light_indices[sampled_slots]
+        area_light_count = light_indices.shape[0]
+        point_slots = sampled_slots - area_light_count
+        is_area_light = sampled_slots < area_light_count
+        result = torch.zeros_like(throughput)
+
+        if bool((~is_area_light).any()):
+            point_mask = ~is_area_light
+            point_indices = point_slots[point_mask]
+            selected_points = point_light_positions[point_indices]
+            selected_intensities = point_light_intensities[point_indices]
+            point_positions = positions[point_mask]
+            point_normals = normals[point_mask]
+            point_throughput = throughput[point_mask]
+            point_diffuse = diffuse[point_mask]
+            to_light = selected_points - point_positions
+            distance_squared = (to_light * to_light).sum(dim=1).clamp_min(EPSILON)
+            direction = to_light / torch.sqrt(distance_squared)[:, None]
+            cosine_surface = (point_normals * direction).sum(dim=1).clamp_min(0.0)
+            visible = cosine_surface > 0.0
+            if bool(visible.any()):
+                shadow_origins = point_positions + direction * 1e-4
+                shadow_hit_mask, shadow_distances, _ = self._intersect_rays_torch(
+                    triangle_a,
+                    triangle_edge1,
+                    triangle_edge2,
+                    shadow_origins,
+                    direction,
+                )
+                target_distance = torch.sqrt(distance_squared)
+                visible = visible & (~shadow_hit_mask | (shadow_distances + 1e-3 >= target_distance))
+                bsdf = point_diffuse / np.pi
+                pdf = light_probabilities[sampled_slots[point_mask]]
+                contrib = selected_intensities * bsdf * (
+                    cosine_surface[:, None] / (distance_squared[:, None] * pdf[:, None].clamp_min(1e-8))
+                )
+                contrib = torch.where(visible[:, None], contrib, torch.zeros_like(contrib))
+                result[point_mask] = point_throughput * contrib
+
+        if not bool(is_area_light.any()):
+            return result
+        area_mask = is_area_light
+        area_slots = sampled_slots[area_mask]
+        sampled_triangle_indices = light_indices[area_slots]
         selected_a = triangle_a[sampled_triangle_indices]
         selected_b = selected_a + triangle_edge1[sampled_triangle_indices]
         selected_c = selected_a + triangle_edge2[sampled_triangle_indices]
-        u1 = torch.rand(ray_count, generator=generator, device=positions.device)
-        u2 = torch.rand(ray_count, generator=generator, device=positions.device)
+        area_count = int(area_slots.numel())
+        u1 = torch.rand(area_count, generator=generator, device=positions.device)
+        u2 = torch.rand(area_count, generator=generator, device=positions.device)
         su1 = torch.sqrt(u1)
         alpha = 1.0 - su1
         beta = su1 * (1.0 - u2)
         gamma = su1 * u2
         light_points = selected_a * alpha[:, None] + selected_b * beta[:, None] + selected_c * gamma[:, None]
-        to_light = light_points - positions
+        area_positions = positions[area_mask]
+        area_normals = normals[area_mask]
+        area_throughput = throughput[area_mask]
+        area_diffuse = diffuse[area_mask]
+        to_light = light_points - area_positions
         distance_squared = (to_light * to_light).sum(dim=1).clamp_min(EPSILON)
         direction = to_light / torch.sqrt(distance_squared)[:, None]
-        cosine_surface = (normals * direction).sum(dim=1).clamp_min(0.0)
+        cosine_surface = (area_normals * direction).sum(dim=1).clamp_min(0.0)
         light_normals = triangle_normals[sampled_triangle_indices]
         cosine_light = (light_normals * (-direction)).sum(dim=1).clamp_min(0.0)
         visible = (cosine_surface > 0.0) & (cosine_light > 0.0)
         if not bool(visible.any()):
-            return torch.zeros_like(throughput)
-        shadow_origins = positions + direction * 1e-4
+            return result
+        shadow_origins = area_positions + direction * 1e-4
         shadow_hit_mask, shadow_distances, shadow_tri_indices = self._intersect_rays_torch(
             triangle_a,
             triangle_edge1,
@@ -608,11 +684,12 @@ class PathTracer:
         target_distance = torch.sqrt(distance_squared)
         visible = visible & shadow_hit_mask & (shadow_tri_indices == sampled_triangle_indices) & (shadow_distances + 1e-3 >= target_distance)
         if not bool(visible.any()):
-            return torch.zeros_like(throughput)
-        bsdf = diffuse / np.pi
-        pdf = light_probabilities[sampled_slots] * (1.0 / light_areas[sampled_slots])
+            return result
+        bsdf = area_diffuse / np.pi
+        pdf = light_probabilities[area_slots] * (1.0 / light_areas[area_slots])
         contrib = triangle_emission[sampled_triangle_indices] * bsdf * (
             cosine_surface[:, None] * cosine_light[:, None] / (distance_squared[:, None] * pdf[:, None].clamp_min(1e-8))
         )
         contrib = torch.where(visible[:, None], contrib, torch.zeros_like(contrib))
-        return throughput * contrib
+        result[area_mask] = area_throughput * contrib
+        return result

@@ -3,6 +3,8 @@ from pathlib import Path
 import numpy as np
 
 from image_lab4.io.config_loader import load_config
+from image_lab4.models.scene import Camera, Material, PointLight, RenderSettings, SceneConfig, Triangle
+from image_lab4.models.vector import ColorRGB, Point3, Vec3
 from image_lab4.services.path_tracer import PathTracer
 
 
@@ -39,3 +41,50 @@ def test_energy_conservation_violation_raises() -> None:
         assert "energy conservation" in str(error)
     else:
         raise AssertionError("Expected energy conservation validation error.")
+
+
+def test_area_and_point_lights_use_common_flux_units_for_probability() -> None:
+    tracer = PathTracer()
+    materials = [Material(name="white", diffuse=ColorRGB(0.8, 0.8, 0.8), mirror=ColorRGB.zero())]
+    triangles = [
+        Triangle(
+            a=Point3(0.0, 0.0, 0.0),
+            b=Point3(2.0, 0.0, 0.0),
+            c=Point3(0.0, 2.0, 0.0),
+            material_name="white",
+            emission=ColorRGB(1.0, 1.0, 1.0),
+        )
+    ]
+    point_lights = [
+        PointLight(
+            position=Point3(0.0, 1.0, 1.0),
+            intensity=ColorRGB(0.5, 0.5, 0.5),
+        )
+    ]
+    config = SceneConfig(
+        camera=Camera(
+            position=Point3(0.0, 0.0, 3.0),
+            target=Point3(0.0, 0.0, 0.0),
+            up=Vec3(0.0, 1.0, 0.0),
+            fov_degrees=45.0,
+        ),
+        render=RenderSettings(
+            width=64,
+            height=64,
+            samples_per_pixel=1,
+            max_depth=2,
+            min_depth=1,
+            gamma=2.2,
+            normalization="max",
+            normalization_value=1.0,
+            seed=1,
+            background=ColorRGB.zero(),
+        ),
+        materials=materials,
+        triangles=triangles,
+        obj_meshes=[],
+        point_lights=point_lights,
+    )
+    scene = tracer._build_scene(config, strict_resolution=False)
+    assert len(scene.light_probabilities) == 2
+    assert np.allclose(scene.light_probabilities, np.array([0.5, 0.5]), atol=1e-6)

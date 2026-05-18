@@ -84,6 +84,7 @@ def _with_render_overrides(config, *, width: int, height: int, samples_per_pixel
         materials=config.materials,
         triangles=config.triangles,
         obj_meshes=config.obj_meshes,
+        point_lights=config.point_lights,
     )
 
 
@@ -92,30 +93,28 @@ def _write_scene_plan(config, destination: Path) -> None:
     axes = figure.add_subplot(111)
     axes.set_facecolor("#fffaf1")
 
-    room = _bounds(config.triangles[0:10])
-    _draw_bbox(axes, room, facecolor="#f3eee5", edgecolor="#85654f", linewidth=2.0, label="Комната")
-
-    left_wall = _bounds(config.triangles[6:8])
-    right_wall = _bounds(config.triangles[8:10])
-    _draw_bbox(axes, left_wall, facecolor="#db7468", edgecolor="#8a3e3a", linewidth=2.0, alpha=0.45, label="Красная стена")
-    _draw_bbox(axes, right_wall, facecolor="#79c275", edgecolor="#3e7a42", linewidth=2.0, alpha=0.45, label="Зелёная стена")
+    room = _bounds(config.triangles[0:2])
+    _draw_bbox(axes, room, facecolor="#f3eee5", edgecolor="#85654f", linewidth=2.0, label="Открытая сцена")
 
     objects = [
-        ("Низкая тумба", _bounds(config.triangles[18:28]), "#ba8a5a"),
-        ("Синяя коробка", _bounds(config.triangles[28:38]), "#6376e7"),
-        ("Белый подиум", _bounds(config.triangles[38:48]), "#d7d6d1"),
-        ("Зеркальная панель", _bounds(config.triangles[48:50]), "#444444"),
-        ("Фиолетовый шкаф", _bounds(config.triangles[50:60]), "#9d64ce"),
+        ("Низкая тумба", _bounds(config.triangles[10:20]), "#ba8a5a"),
+        ("Синяя коробка", _bounds(config.triangles[20:30]), "#6376e7"),
+        ("Белый подиум", _bounds(config.triangles[30:40]), "#d7d6d1"),
+        ("Зеркальная панель", _bounds(config.triangles[40:42]), "#444444"),
+        ("Фиолетовый шкаф", _bounds(config.triangles[42:52]), "#9d64ce"),
         ("Пирамида 1", _obj_bbox(config.obj_meshes[0]), "#222222"),
         ("Пирамида 2", _obj_bbox(config.obj_meshes[1]), "#d1a265"),
     ]
     for label, bbox, color in objects:
         _draw_bbox(axes, bbox, facecolor=color, edgecolor="#27313f", linewidth=1.3, alpha=0.88, label=label)
 
-    for index, triangles in enumerate((config.triangles[10:12], config.triangles[12:14], config.triangles[14:16], config.triangles[16:18]), start=1):
+    for index, triangles in enumerate((config.triangles[2:4], config.triangles[4:6], config.triangles[6:8], config.triangles[8:10]), start=1):
         center = _centroid(triangles)
         axes.scatter(center[0], center[2], s=90, marker="*", color="#f3a22b", edgecolors="#6d4306", linewidths=0.8, zorder=6)
         axes.text(center[0] + 0.03, center[2] + 0.03, f"L{index}", fontsize=10, color="#704200")
+    for index, light in enumerate(config.point_lights, start=1):
+        axes.scatter(light.position.x, light.position.z, s=75, marker="o", color="#74a6ff", edgecolors="#183d77", linewidths=0.8, zorder=6)
+        axes.text(light.position.x + 0.03, light.position.z - 0.05, f"P{index}", fontsize=10, color="#183d77")
 
     camera = config.camera.position
     target = config.camera.target

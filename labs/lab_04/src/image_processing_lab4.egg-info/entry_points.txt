@@ -1,0 +1,3 @@
+[console_scripts]
+image-lab4-cli = image_lab4.cli:main
+image-lab4-gui = image_lab4.app:main

@@ -4,7 +4,17 @@ import json
 from pathlib import Path
 from typing import Union
 
-from image_lab4.models.scene import Camera, Material, ObjMesh, RenderSettings, SceneConfig, Transform, Triangle
+from image_lab4.models.scene import (
+    Camera,
+    DenoiseSettings,
+    Material,
+    ObjMesh,
+    PointLight,
+    RenderSettings,
+    SceneConfig,
+    Transform,
+    Triangle,
+)
 from image_lab4.models.vector import ColorRGB, Point3, Vec3
 
 
@@ -46,6 +56,14 @@ def load_config_from_text(text: str, base_dir: Union[str, Path]) -> SceneConfig:
         )
         for item in data.get("obj_meshes", [])
     ]
+    point_lights = [
+        PointLight(
+            position=_point(item["position"]),
+            intensity=_color(item.get("intensity", item.get("power", [1.0, 1.0, 1.0]))),
+        )
+        for item in data.get("point_lights", [])
+    ]
+    denoise_data = data.get("denoise", {})
     return SceneConfig(
         camera=Camera(
             position=_point(data["camera"]["position"]),
@@ -68,6 +86,18 @@ def load_config_from_text(text: str, base_dir: Union[str, Path]) -> SceneConfig:
         materials=materials,
         triangles=triangles,
         obj_meshes=obj_meshes,
+        point_lights=point_lights,
+        denoise=DenoiseSettings(
+            enabled=bool(denoise_data.get("enabled", True)),
+            filter_name=str(denoise_data.get("filter", denoise_data.get("filter_name", "bilateral"))),
+            radius=int(denoise_data.get("radius", 2)),
+            sigma_spatial=float(denoise_data.get("sigma_spatial", 1.4)),
+            sigma_color=float(denoise_data.get("sigma_color", 0.35)),
+            sigma_depth=float(denoise_data.get("sigma_depth", 0.08)),
+            sigma_normal=float(denoise_data.get("sigma_normal", 0.35)),
+            strength=float(denoise_data.get("strength", 0.95)),
+            preserve_object_flux=bool(denoise_data.get("preserve_object_flux", True)),
+        ),
     )
 
 
@@ -119,6 +149,24 @@ def save_config(path: Union[str, Path], config: SceneConfig) -> None:
             }
             for item in config.obj_meshes
         ],
+        "point_lights": [
+            {
+                "position": list(item.position.to_tuple()),
+                "intensity": list(item.intensity.to_tuple()),
+            }
+            for item in config.point_lights
+        ],
+        "denoise": {
+            "enabled": config.denoise.enabled,
+            "filter": config.denoise.filter_name,
+            "radius": config.denoise.radius,
+            "sigma_spatial": config.denoise.sigma_spatial,
+            "sigma_color": config.denoise.sigma_color,
+            "sigma_depth": config.denoise.sigma_depth,
+            "sigma_normal": config.denoise.sigma_normal,
+            "strength": config.denoise.strength,
+            "preserve_object_flux": config.denoise.preserve_object_flux,
+        },
     }
     Path(path).write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 

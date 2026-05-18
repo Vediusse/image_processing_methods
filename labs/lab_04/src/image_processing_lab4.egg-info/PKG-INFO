@@ -1,0 +1,42 @@
+Metadata-Version: 2.1
+Name: image-processing-lab4
+Version: 1.0.0
+Summary: Lab 4 project: path tracing renderer with global illumination
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.24
+Requires-Dist: PySide6>=6.5
+Requires-Dist: matplotlib>=3.7
+Requires-Dist: rich>=13.0
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+
+# ЛР 4. Формирование изображения методом трассировки путей
+
+Отдельный проект для четвертой лабораторной работы по курсу «Методы обработки изображений».
+
+Проект реализует path tracing для треугольных сеток с учетом:
+
+- глобального освещения;
+- протяженных ламбертовых источников;
+- смешанных диффузных и зеркальных материалов;
+- выбора события по значимости и русской рулетке;
+- антиалиасинга за счет случайного сэмплирования внутри пикселя;
+- экспорта изображения в `PPM`.
+
+## Запуск
+
+```bash
+cd labs/lab_04
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e '.[dev]'
+image-lab4-gui
+```
+
+CLI:
+
+```bash
+cd labs/lab_04
+image-lab4-cli --config examples/default_scene.json --output outputs/demo.ppm
+```

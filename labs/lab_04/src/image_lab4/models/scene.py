@@ -38,6 +38,12 @@ class ObjMesh:
 
 
 @dataclass(frozen=True)
+class PointLight:
+    position: Point3
+    intensity: ColorRGB
+
+
+@dataclass(frozen=True)
 class Camera:
     position: Point3
     target: Point3
@@ -60,12 +66,27 @@ class RenderSettings:
 
 
 @dataclass(frozen=True)
+class DenoiseSettings:
+    enabled: bool = True
+    filter_name: str = "bilateral"
+    radius: int = 2
+    sigma_spatial: float = 1.4
+    sigma_color: float = 0.35
+    sigma_depth: float = 0.08
+    sigma_normal: float = 0.35
+    strength: float = 0.95
+    preserve_object_flux: bool = True
+
+
+@dataclass(frozen=True)
 class SceneConfig:
     camera: Camera
     render: RenderSettings
     materials: List[Material]
     triangles: List[Triangle]
     obj_meshes: List[ObjMesh]
+    point_lights: List[PointLight] = field(default_factory=list)
+    denoise: DenoiseSettings = field(default_factory=DenoiseSettings)
 
 
 @dataclass(frozen=True)
@@ -83,8 +104,10 @@ class ResolvedTriangle:
 class Scene:
     camera: Camera
     render: RenderSettings
+    denoise: DenoiseSettings
     triangles: List[ResolvedTriangle]
     lights: List[ResolvedTriangle]
+    point_lights: List[PointLight]
     camera_forward: Vec3
     camera_right: Vec3
     camera_up: Vec3
@@ -95,6 +118,8 @@ class Scene:
     triangle_normals: "np.ndarray"
     light_indices: "np.ndarray"
     light_probabilities: "np.ndarray"
+    point_light_positions: "np.ndarray"
+    point_light_intensities: "np.ndarray"
 
 
 @dataclass(frozen=True)

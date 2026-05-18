@@ -15,6 +15,9 @@
 - GUI и CLI
 - Быстрый preview и более качественный финальный рендер
 - GPU backend через `torch + mps`
+- Realtime preview через `Taichi + Metal`, чтобы быстро крутить/проверять сцену без ожидания path tracing
+- Набор низкочастотных фильтров в отдельном сервисе
+- Билатеральное шумоподавление финального GPU path tracing до tone mapping
 
 ## Что показывать преподавателю
 
@@ -27,6 +30,7 @@
 5. Сделал протяженные цветные источники света.
 6. Добавил GUI и CLI, чтобы можно было менять сцену и рендерить заново.
 7. Добавил экспорт не только в `PPM`, но и в `HDR`.
+8. Добавил физически корректную фильтрацию шума в линейной яркости: `box`, `gaussian`, `median`, `bilateral`, переключение через CLI/JSON.
 
 ## Где что лежит
 
@@ -43,6 +47,70 @@
 - `_sample_events_torch(...)` — выбор диффузного или зеркального события
 - `_postprocess_radiance(...)` — подавление fireflies и денойз
 - `_tone_map(...)` — нормировка и гамма
+
+### Быстрый realtime-preview
+
+Файл:
+[taichi_realtime.py](/Users/rublev/DEV/image/image_processing_methods/labs/lab_04/src/image_lab4/services/taichi_realtime.py)
+
+Смысл:
+- это отдельный `Taichi + Metal` GPGPU backend;
+- он выпускает по одному лучу из камеры на пиксель;
+- пересечение со всеми треугольниками и простой свет от area-light источников считаются на GPU;
+- режим нужен для интерактивного просмотра сцены, а не для финального физически точного кадра.
+
+Команда:
+
+```bash
+image-lab4-cli --config examples/default_scene.json --output outputs/realtime.ppm --png outputs/realtime.png --realtime
+```
+
+Для замера скорости:
+
+```bash
+image-lab4-cli --config examples/default_scene.json --output outputs/realtime.ppm --png outputs/realtime.png --realtime --frames 10
+```
+
+Первый кадр компилирует Taichi kernel, следующие кадры идут быстро. В GUI кнопка `Realtime старт` запускает непрерывный таймерный режим, повторное нажатие останавливает его.
+
+### Progressive Monte-Carlo path tracing на GPU
+
+Файл:
+[taichi_progressive_path_tracer.py](/Users/rublev/DEV/image/image_processing_methods/labs/lab_04/src/image_lab4/services/taichi_progressive_path_tracer.py)
+
+Смысл:
+- это уже не raster preview, а Monte-Carlo path tracing;
+- каждый frame добавляет `1 spp` в накопление;
+- внутри есть несколько отскоков, diffuse/mirror sampling, прямой свет от area-light источников и русская рулетка;
+- на текущей сцене `500x500`, `max_depth=4`, `60` кадров дали warm FPS около `39`.
+
+Команда:
+
+```bash
+image-lab4-cli --config examples/default_scene.json --output outputs/gpu_pathtrace.ppm --png outputs/gpu_pathtrace.png --hdr outputs/gpu_pathtrace.hdr --gpu-pathtrace --frames 60
+```
+
+Это главный режим, если нужно объяснять преподавателю именно GPGPU Monte-Carlo path tracing на Mac.
+
+### Фильтры шума
+
+Файл:
+[image_filters.py](/Users/rublev/DEV/image/image_processing_methods/labs/lab_04/src/image_lab4/services/image_filters.py)
+
+Что важно:
+- фильтры применяются к radiance до tone mapping и gamma correction;
+- `box` / `arithmetic` и `gaussian` — классические низкочастотные фильтры из лекции;
+- `median` — нелинейный медианный фильтр, после него включена нормировка суммарной энергии по объектам;
+- `bilateral` — главный фильтр для финального изображения, потому что он сохраняет границы объектов;
+- guide-данные для GPU-рендера: глубина, индекс первого пересеченного треугольника и нормаль поверхности;
+- прямая яркость первого попадания фильтруется отдельно от вторичной яркости, чтобы не смешивать разные физические компоненты освещения.
+
+Команды:
+
+```bash
+image-lab4-cli --config examples/default_scene.json --output outputs/gpu_filtered.ppm --png outputs/gpu_filtered.png --gpu-pathtrace --frames 20 --filter bilateral --filter-radius 2 --filter-strength 0.85
+image-lab4-cli --config examples/default_scene.json --output outputs/gpu_raw.ppm --png outputs/gpu_raw.png --gpu-pathtrace --frames 20 --no-denoise
+```
 
 ### Структуры сцены
 
